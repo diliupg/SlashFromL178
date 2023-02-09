@@ -9,8 +9,9 @@
 #include "Components/AttributeComponent.h"
 #include "Perception/PawnSensingComponent.h"
 #include "HUD/HealthBarComponent.h"
+#include "Items/Weapons/Weapon.h" 
 #include "Kismet/KismetSystemLibrary.h"
-#include "Kismet/GameplayStatics.h"
+#include "Kismet/GameplayStatics.h"          
 
 #include "Slash/DebugMacros.h"
 
@@ -54,6 +55,14 @@ void AEnemy::BeginPlay()
 	if ( PawnSensing )
 	{
 		PawnSensing->OnSeePawn.AddDynamic( this, &AEnemy::PawnSeen );
+	}
+
+	UWorld* World = GetWorld( );
+	if ( World && WeaponClass )
+	{
+		AWeapon* DefaultWeapon = World->SpawnActor<AWeapon>( WeaponClass );
+		DefaultWeapon->Equip( GetMesh( ), FName( "RightHandSocket" ), this, this );
+		EquippedWeapon = DefaultWeapon;
 	}
 }
 

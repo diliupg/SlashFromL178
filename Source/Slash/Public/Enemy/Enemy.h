@@ -25,7 +25,7 @@ public:
 	void CheckPatrolTarget( );
 
 	void CheckCombatTarget( );
-
+	 
 	virtual void SetupPlayerInputComponent( class UInputComponent* PlayerInputComponent ) override;
 
 	virtual void GetHit_Implementation( const FVector& ImpactPoint ) override;
@@ -39,8 +39,11 @@ private:
 	UPROPERTY( VisibleAnywhere )
 	UHealthBarComponent* HealthBarWidget;
 
-	UPROPERTY( VisibleAnywhere ) 
-	UPawnSensingComponent* PawnSensing;
+	UPROPERTY( VisibleAnywhere )    
+	UPawnSensingComponent* PawnSensing;  
+
+	UPROPERTY( EditAnywhere )
+	TSubclassOf<class AWeapon> WeaponClass;
 
 	UPROPERTY()
 	AActor* CombatTarget;
