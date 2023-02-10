@@ -57,13 +57,14 @@ void AEnemy::BeginPlay()
 		PawnSensing->OnSeePawn.AddDynamic( this, &AEnemy::PawnSeen );
 	}
 
+	// attach weapon to enemy hand 
 	UWorld* World = GetWorld( );
 	if ( World && WeaponClass )
 	{
 		AWeapon* DefaultWeapon = World->SpawnActor<AWeapon>( WeaponClass );
 		DefaultWeapon->Equip( GetMesh( ), FName( "RightHandSocket" ), this, this );
 		EquippedWeapon = DefaultWeapon;
-	}
+	}  
 }
 
 void AEnemy::Tick( float DeltaTime )
@@ -132,7 +133,7 @@ void AEnemy::PawnSeen( APawn* SeenPawn )
 		{
 			EnemyState = EEnemyState::EES_Chasing;
 			MoveToTarget( CombatTarget );
-			UE_LOG( LogTemp, Warning, TEXT( "Pawn seen, chase player" ) );
+			//UE_LOG( LogTemp, Warning, TEXT( "Pawn seen, chase player" ) );
 		}	
 	}
 }
@@ -241,6 +242,14 @@ float AEnemy::TakeDamage( float DamageAmount, struct FDamageEvent const& DamageE
 	GetCharacterMovement( )->MaxWalkSpeed = 300.f;
 	MoveToTarget( CombatTarget );
 	return DamageAmount;
+}
+
+void AEnemy::Destroyed( )
+{
+	if ( EquippedWeapon )
+	{
+		EquippedWeapon->Destroy( );
+	}
 }
 
 void AEnemy::Die( )

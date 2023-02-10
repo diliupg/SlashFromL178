@@ -1,4 +1,4 @@
-// EMorphus Software 2022
+ // EMorphus Software 2022
 
 
 #include "Items/Weapons/Weapon.h"
@@ -35,7 +35,7 @@ void AWeapon::Equip( USceneComponent* InParent, FName SocketName, AActor* NewOwn
 {
 	SetOwner( NewOwner );
 	SetInstigator( NewInstigator );
-	AttachMeshToSocket( InParent, SocketName );
+	AttachMeshToSocket( InParent, SocketName );  
 	ItemState = EItemState::EIS_Equipped;
 	if ( EquipSound )
 	{
