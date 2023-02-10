@@ -52,7 +52,7 @@ private:
 	double CombatRadius = 750.f;
 
 	UPROPERTY( EditAnywhere )
-	double AttackRadius = 200.f;
+	double AttackRadius = 150.f;
 
 	/*
 	* Navigation
@@ -96,6 +96,10 @@ protected:
 	void MoveToTarget( AActor* Target );
 
 	AActor* ChoosePatrolTarget( );
+
+	virtual void Attack( ) override;
+
+	virtual void PlayAttackMontage( ) override;
 
 	UFUNCTION()
 	void PawnSeen( APawn* SeenPawn );

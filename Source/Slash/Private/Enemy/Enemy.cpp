@@ -106,12 +106,49 @@ AActor* AEnemy::ChoosePatrolTarget( )
 	return nullptr;
 }
 
+void AEnemy::Attack( )
+{
+	Super::Attack( );
+	PlayAttackMontage( );
+}
+
+void AEnemy::PlayAttackMontage( )
+{
+	Super::PlayAttackMontage( );
+
+	UAnimInstance* AnimInstance = GetMesh( )->GetAnimInstance( );
+	if ( AnimInstance && AttackMontage )
+	{
+		AnimInstance->Montage_Play( AttackMontage );
+		const int32 Selection = FMath::RandRange( 0, 3 );
+		FName SectionName = FName( );
+		switch ( Selection )
+		{
+		case 0:
+			SectionName = FName( "Attack1" );
+			break;
+		case 1:
+			SectionName = FName( "Attack2" );
+			break;
+		case 2:
+			SectionName = FName( "Attack3" );
+			break;
+		case 3:
+			SectionName = FName( "Attack4" );
+			break;
+		default:
+			break;
+		}
+		AnimInstance->Montage_JumpToSection( SectionName, AttackMontage );
+	} 
+}
+
 void AEnemy::MoveToTarget( AActor* Target )
 {
 	if ( EnemyController == nullptr || Target == nullptr ) return;
 	FAIMoveRequest MoveRequest;
 	MoveRequest.SetGoalActor( Target );
-	MoveRequest.SetAcceptanceRadius( 15.f );
+	MoveRequest.SetAcceptanceRadius( 60.f );
 
 	EnemyController->MoveTo( MoveRequest );
 }
@@ -171,7 +208,7 @@ void AEnemy::CheckCombatTarget( )
 		EnemyState = EEnemyState::EES_Patrolling;
 		GetCharacterMovement( )->MaxWalkSpeed = 125.f;
 		MoveToTarget( PatrolTarget );
-		UE_LOG( LogTemp, Warning, TEXT( "Lose Interest" ) );
+		//UE_LOG( LogTemp, Warning, TEXT( "Lose Interest" ) );
 	}
 	else if ( !InTargetRange( CombatTarget, AttackRadius ) && EnemyState != EEnemyState::EES_Chasing )
 	{
@@ -179,14 +216,15 @@ void AEnemy::CheckCombatTarget( )
 		EnemyState = EEnemyState::EES_Chasing;
 		GetCharacterMovement( )->MaxWalkSpeed = 300.f;
 		MoveToTarget( CombatTarget );
-		UE_LOG( LogTemp, Warning, TEXT( "Chase Player" ) );
+		//UE_LOG( LogTemp, Warning, TEXT( "Chase Player" ) );
 	}
 	else if ( InTargetRange( CombatTarget, AttackRadius ) && EnemyState != EEnemyState::EES_Attacking )
 	{
 		// inside attack range, attack player
 		EnemyState = EEnemyState::EES_Attacking;
 		// TODO Attack Montage
-		UE_LOG( LogTemp, Warning, TEXT( "Attack Player" ) );
+		Attack( );
+
 	}
 }
 
