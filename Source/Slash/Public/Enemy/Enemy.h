@@ -83,7 +83,26 @@ private:
 	UPROPERTY( EditAnywhere, Category = AINavigation )
 	float RunSpeed = 300.f;
 	
-	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
+	/**AI Behavior*/
+
+	void HideHealthBar();
+	void ShowHealthBar( );
+	void LoseInterest( );
+	void StartPatrolling( );
+	void ChaseTarget( );
+
+
+	bool IsOutsideCombatRadius( );
+	bool IsOutsideAttackRadius( );
+	bool IsInsideAttackRadius( );
+	bool IsChasing( );
+	bool IsAttacking( );
+
+
+	UPROPERTY(EditAnywhere, Category = Combat )
+	float PatrollingSpeed = 125.f;
+	UPROPERTY( EditAnywhere, Category = Combat )
+	float chaseSpeed = 300.f;
 
 protected:
 
@@ -107,7 +126,11 @@ protected:
  
 
 	UPROPERTY(BlueprintReadOnly )
-	EDeathPose DeathPose = EDeathPose::EDP_Alive;
+	EDeathPose DeathPose ;
+
+	UPROPERTY( BlueprintReadOnly )
+	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
+
 public:	
 
 	
