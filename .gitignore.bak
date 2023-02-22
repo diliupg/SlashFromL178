@@ -4,18 +4,11 @@
 
 # we do not need to version control the Starter Content and the Assets we got from the market place
 =======
-Content/AncientTreasures/*
-Content/AnimalVarietyPack/*
-Content/BlackAlder/*
-Content/EchoContent/*
-Content/HumanVocalizations/*
-Content/InfinityBladeWeapons/*
-Content/KiteDemo/*
-Content/MedievalDungeon/*
-Content/ParagonMinions/*
-Content/Megascans/*
+
 Content/StarterContent/*
-Content/StonePineForest/*
+
+
+
 
 =======
 

@@ -25,8 +25,6 @@ public:
 	void CheckPatrolTarget( );
 
 	void CheckCombatTarget( );
-	 
-	virtual void SetupPlayerInputComponent( class UInputComponent* PlayerInputComponent ) override;
 
 	virtual void GetHit_Implementation( const FVector& ImpactPoint ) override;
 
@@ -84,7 +82,6 @@ private:
 	float RunSpeed = 300.f;
 	
 	/**AI Behavior*/
-
 	void HideHealthBar();
 	void ShowHealthBar( );
 	void LoseInterest( );
@@ -97,7 +94,21 @@ private:
 	bool IsInsideAttackRadius( );
 	bool IsChasing( );
 	bool IsAttacking( );
+	bool IsDead( );
+	bool IsEngaged( );
 
+	void ClearPatrolTimer( );
+
+	/* Combat */
+	void StartAttackTimer( );
+	void ClearAttackTimer( );
+
+	FTimerHandle AttackTimer;
+
+	UPROPERTY(EditAnywhere, Category = Combat )
+	float AttackMin = 0.5f;
+	UPROPERTY( EditAnywhere, Category = Combat )
+	float AttackMax = 1.f;
 
 	UPROPERTY(EditAnywhere, Category = Combat )
 	float PatrollingSpeed = 125.f;
@@ -120,16 +131,18 @@ protected:
 
 	virtual void PlayAttackMontage( ) override;
 
+	virtual bool CanAttack( ) override; 
+
+	virtual void HandleDamage( float DamageAmount ) override ;
+
 	UFUNCTION()
 	void PawnSeen( APawn* SeenPawn );
-
  
-
 	UPROPERTY(BlueprintReadOnly )
 	EDeathPose DeathPose ;
 
 	UPROPERTY( BlueprintReadOnly )
-	EEnemyState EnemyState = EEnemyState::EES_Patrolling;
+	EEnemyState  EnemyState = EEnemyState::EES_Patrolling;
 
 public:	
 

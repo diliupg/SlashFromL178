@@ -11,7 +11,6 @@
 #include "HUD/HealthBarComponent.h"
 #include "Items/Weapons/Weapon.h" 
 #include "Kismet/KismetSystemLibrary.h"
-#include "Kismet/GameplayStatics.h"          
 
 #include "Slash/DebugMacros.h"
 
@@ -70,6 +69,8 @@ void AEnemy::BeginPlay()
 void AEnemy::Tick( float DeltaTime )
 {
 	Super::Tick( DeltaTime );
+
+	if ( IsDead()) return;
 
 	if ( EnemyState > EEnemyState::EES_Patrolling )
 	{
@@ -142,9 +143,36 @@ bool AEnemy::IsChasing( )
 	return EnemyState == EEnemyState::EES_Chasing;
 }
 
-bool AEnemy::IsAttacking( )
+bool AEnemy::IsAttacking  ( )
 {
 	return EnemyState == EEnemyState::EES_Attacking; 
+}
+
+bool AEnemy::IsDead( )
+{
+	return EnemyState == EEnemyState::EES_Dead;
+}
+
+bool AEnemy::IsEngaged( )
+{
+	return EnemyState == EEnemyState::EES_Engaged
+}
+
+void AEnemy::ClearPatrolTimer( )
+{
+	GetWorldTimerManager( ).ClearTimer( PatrolTimer );
+}
+
+void AEnemy::StartAttackTimer( )
+{
+	EnemyState == EEnemyState::EES_Attacking;
+	const float AttackTime = FMath::RandRange( AttackMin, AttackMax );
+	GetWorldTimerManager().SetTimer( AttackTimer, this, &AEnemy::Attack, AttackTime );
+}
+
+void AEnemy::ClearAttackTimer( )
+{
+	GetWorldTimerManager( ).ClearTimer( AttackTimer );
 }
 
 AActor* AEnemy::ChoosePatrolTarget( )
@@ -204,6 +232,23 @@ void AEnemy::PlayAttackMontage( )
 	} 
 }
 
+bool AEnemy::CanAttack( )
+{
+	bool bCanAttack = IsInsideAttackRadius( ) &&
+		!IsAttacking( ) &&
+		!IsDead();
+	return bCanAttack;
+}
+
+void AEnemy::HandleDamage( float DamageAmount )
+{
+	Super::HandleDamage( DamageAmount );
+	if ( Attributes && HealthBarWidget )
+	{
+		HealthBarWidget->SetHealthPercent( Attributes->GetHealthPercent( ) );
+	}
+}
+
 void AEnemy::MoveToTarget( AActor* Target )
 {
 	if ( EnemyController == nullptr || Target == nullptr ) return;
@@ -219,20 +264,18 @@ void AEnemy::MoveToTarget( AActor* Target )
 */
 void AEnemy::PawnSeen( APawn* SeenPawn )
 {
-	if ( EnemyState == EEnemyState::EES_Chasing ) return;
+	const bool bShouldChaseTarget =
+		EnemyState != EEnemyState::EES_Dead &&
+		EnemyState != EEnemyState::EES_Chasing &&
+		EnemyState < EEnemyState::EES_Attacking &&
+		SeenPawn->ActorHasTag( FName( "SlashCharacter" ) );
 
-	if ( SeenPawn->ActorHasTag( FName( "SlashCharacter" ) ) )
+	if ( bShouldChaseTarget )
 	{
-		GetWorldTimerManager( ).ClearTimer( PatrolTimer );
-		GetCharacterMovement( )->MaxWalkSpeed = RunSpeed;
 		CombatTarget = SeenPawn;
+		ClearPatrolTimer( );
+		ChaseTarget( );
 
-		if ( EnemyState != EEnemyState::EES_Attacking )
-		{
-			EnemyState = EEnemyState::EES_Chasing;
-			MoveToTarget( CombatTarget );
-			//UE_LOG( LogTemp, Warning, TEXT( "Pawn seen, chase player" ) );
-		}	
 	}
 }
 
@@ -260,70 +303,40 @@ void AEnemy::CheckCombatTarget( )
 {
 	if ( IsOutsideCombatRadius() )
 	{
-		// Outside Combat radius, lose interest
+		ClearAttackTimer( );
 		LoseInterest( );
-
-		StartPatrolling( );
-		//UE_LOG( LogTemp, Warning, TEXT( "Lose Interest" ) );
+		if ( !IsEngaged( ) ) StartPatrolling( );
 	}
 	else if ( IsOutsideAttackRadius( ) && !IsChasing() )
 	{
-		ChaseTarget( );
+		ClearAttackTimer( );
+		if( !IsEngaged() ) ChaseTarget( );
 	}
-	else if ( IsInsideAttackRadius() && !IsAttacking() )
+	else if ( CanAttack() )
 	{
-		EnemyState = EEnemyState::EES_Attacking;
-		Attack( );
+		StartPatrolling( );
 	}
-}
-
-void AEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
 void AEnemy::GetHit_Implementation( const FVector& ImpactPoint ) 
 {
 	ShowHealthBar( );
 
-	if ( Attributes && Attributes->IsAlive() )
+	if ( IsAlive( ) )
 	{
 		DirectionalHitReact( ImpactPoint );
 	}
-	else
-	{
-		Die( );
-	}
+	else Die( );
 
-	if ( HitSound )
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-			this,
-			HitSound,
-			ImpactPoint
-		);
-	}
-	if ( HitParticles )
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(
-			GetWorld( ),
-			HitParticles,
-			ImpactPoint
-		);
-	}
+	PlayHitSound( ImpactPoint );
+	SpawnJHitParticles( ImpactPoint );
 }
 
 float AEnemy::TakeDamage( float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser )
 {
-	if ( Attributes && HealthBarWidget )
-	{
-		Attributes->ReceiveDamage( DamageAmount );
-		HealthBarWidget->SetHealthPercent( Attributes->GetHealthPercent() );
-	}
+	HandleDamage( DamageAmount );
 	CombatTarget = EventInstigator->GetPawn( );
-	EnemyState = EEnemyState::EES_Chasing;
-	GetCharacterMovement( )->MaxWalkSpeed = chaseSpeed;
-	MoveToTarget( CombatTarget );
+	ChaseTarget( );
 	return DamageAmount;
 }
 
